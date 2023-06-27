@@ -45,17 +45,33 @@ const fetchWeekSteps = createAsyncThunk('weekStep/fetchWeekSteps', async () => {
     err => console.log('err', err),
   );
 
-  const weekSteps = response.reduce((accumulator, current) => {
-    if (current.steps.length > 0) {
-      let sourceSteps = current.steps.reduce((total, step) => {
+  let weekSteps = 0;
+  let dailySteps = [];
+
+  for (let i = 0; i < response.length; i++) {
+    if (response[i].steps.length > 0) {
+      let sourceSteps = response[i].steps.reduce((total, step) => {
+        console.log('step', step);
+        dailySteps.push({date: step.date, value: step.value});
         return total + step.value;
       }, 0);
-      return accumulator + sourceSteps;
+      weekSteps += sourceSteps;
     }
-    return accumulator;
-  }, 0);
+  }
 
-  return weekSteps;
+  // const weekSteps = response.reduce((accumulator, current) => {
+  //   if (current.steps.length > 0) {
+  //     let sourceSteps = current.steps.reduce((total, step) => {
+  //       return total + step.value;
+  //     }, 0);
+  //     return accumulator + sourceSteps;
+  //   }
+  //   return accumulator;
+  // }, 0);
+
+  console.log('dailySteps', dailySteps);
+
+  return {total: weekSteps, dailySteps};
 });
 
 const todayStepSlice = createSlice({
@@ -84,7 +100,7 @@ const todayStepSlice = createSlice({
 
 const weekStepSlice = createSlice({
   name: 'weekStep',
-  initialState: {weekStep: 0, status: 'idle', error: null},
+  initialState: {weekStep: 0, dailySteps: [], status: 'idle', error: null},
   extraReducers: builder => {
     builder
       .addCase(fetchWeekSteps.pending, state => {
@@ -92,7 +108,8 @@ const weekStepSlice = createSlice({
       })
       .addCase(fetchWeekSteps.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.weekStep = action.payload;
+        state.weekStep = action.payload.total;
+        state.dailySteps = action.payload.dailySteps;
       })
       .addCase(fetchWeekSteps.rejected, (state, action) => {
         state.status = 'failed';
