@@ -50,26 +50,24 @@ const fetchWeekSteps = createAsyncThunk('weekStep/fetchWeekSteps', async () => {
 
   for (let i = 0; i < response.length; i++) {
     if (response[i].steps.length > 0) {
-      let sourceSteps = response[i].steps.reduce((total, step) => {
-        console.log('step', step);
-        dailySteps.push({date: step.date, value: step.value});
-        return total + step.value;
-      }, 0);
-      weekSteps += sourceSteps;
+      for (let j = 0; j < response[i].steps.length; j++) {
+        let step = response[i].steps[j];
+
+        // Check if the date already exists in dailySteps
+        let existingEntry = dailySteps.find(entry => entry.date === step.date);
+
+        if (existingEntry) {
+          // If the date exists, add the value to the existing one
+          existingEntry.value += step.value;
+        } else {
+          // If the date does not exist, add a new entry
+          dailySteps.push({date: step.date, value: step.value});
+        }
+
+        weekSteps += step.value;
+      }
     }
   }
-
-  // const weekSteps = response.reduce((accumulator, current) => {
-  //   if (current.steps.length > 0) {
-  //     let sourceSteps = current.steps.reduce((total, step) => {
-  //       return total + step.value;
-  //     }, 0);
-  //     return accumulator + sourceSteps;
-  //   }
-  //   return accumulator;
-  // }, 0);
-
-  console.log('dailySteps', dailySteps);
 
   return {total: weekSteps, dailySteps};
 });
